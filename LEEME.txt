@@ -1,0 +1,17 @@
+# NEUMÁTICOS YECLA
+
+Aplicación web instalable (PWA) para gestionar stock de neumáticos.
+
+## Publicación gratuita en GitHub Pages
+
+1. Sube todos los archivos de esta carpeta a la raíz del repositorio `Neumáticos-yecla`.
+2. En GitHub abre Settings → Pages.
+3. En Build and deployment selecciona Deploy from a branch.
+4. Selecciona la rama `main` y carpeta `/ (root)`, y pulsa Save.
+5. Espera a que GitHub Pages publique la web.
+
+## Instalación
+- iPhone: abrir la URL en Safari → Compartir → Añadir a pantalla de inicio.
+- Android: abrir URL en Chrome → menú ⋮ → Instalar aplicación.
+
+Los datos se guardan localmente en el navegador/dispositivo. Exporta copias de seguridad desde Contadores.

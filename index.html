@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#172536">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Neumáticos Yecla">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<title>NEUMÁTICOS YECLA</title>
+<style>
+:root{color-scheme:dark;--bg:#172536;--panel:#223246;--text:#f3f5f7;--muted:#afbbc8;--line:#394b60;--gold:#d6a94c;--danger:#a83f3f;--green:#247e59}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px system-ui,-apple-system,sans-serif}
+body.light{color-scheme:light;--bg:#f5f6f8;--panel:#fff;--text:#202832;--muted:#66717d;--line:#dce1e6}
+header{background:#172536;color:white;padding:15px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:2}
+.brand{display:flex;align-items:center;gap:10px}.logo{width:40px;height:40px;border-radius:11px;background:var(--gold);display:grid;place-items:center;color:#172536;font-size:22px}
+.brand strong{display:block;font-size:15px;letter-spacing:.5px}.brand small{font-size:10px;color:#c2cbd4;letter-spacing:1px}
+button,input,select{font:inherit}button{cursor:pointer}.theme{background:#314255;color:white;border:0;padding:9px;border-radius:9px}
+nav{display:flex;overflow:auto;gap:6px;padding:9px;background:var(--panel);position:sticky;top:70px;z-index:2}
+nav button{white-space:nowrap;border:0;border-radius:8px;padding:9px 12px;background:transparent;color:var(--muted);font-size:12px}
+nav button.active,.primary{background:var(--gold);color:#172536;font-weight:700}
+main{max-width:850px;margin:auto;padding:16px;min-height:75vh}h2{font-size:21px;margin:0 0 5px}h3{font-size:15px;margin:15px 0 8px}.muted,small{color:var(--muted)}.muted{font-size:12px}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin:14px 0}.stat,.panel,.item{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px}
+.stat small{display:block;font-size:11px}.stat b{display:block;font-size:25px;margin-top:5px}
+.actions{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}.btn{border:0;border-radius:9px;padding:10px 13px;font-size:12px;font-weight:700}.secondary{background:var(--panel);color:var(--text);border:1px solid var(--line)}.danger{background:var(--danger);color:white}.green{background:var(--green);color:white}
+input,select{width:100%;padding:11px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--text);margin:5px 0 11px}label{font-size:12px;color:var(--muted)}
+.item{display:flex;justify-content:space-between;align-items:center;gap:9px;margin:8px 0}.item strong{font-size:14px}.item small{display:block;font-size:11px;margin-top:4px}.count{font-size:21px;font-weight:800;text-align:center}.step{display:flex;gap:6px;align-items:center}.step button{width:34px;height:34px;border:1px solid var(--line);background:var(--bg);color:var(--text);border-radius:8px;font-size:19px}
+.empty{text-align:center;padding:25px 8px;color:var(--muted);font-size:13px}.notice{padding:11px;background:var(--panel);border-radius:9px;font-size:12px;margin:10px 0}
+.month{display:flex;align-items:center;justify-content:space-between;margin:12px 0}.month button{background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:7px 13px}
+.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}.day{min-height:48px;border-radius:8px;background:var(--panel);border:1px solid var(--line);padding:5px 2px;text-align:center;font-size:11px}.day b{display:block}.day em{display:block;color:#d6a94c;font-style:normal;font-weight:800;margin-top:3px}
+footer{text-align:center;border-top:1px solid var(--line);padding:14px;color:var(--muted);font-size:10px}
+dialog{border:1px solid var(--line);border-radius:15px;background:var(--bg);color:var(--text);width:min(430px,calc(100% - 25px));max-height:85vh}dialog::backdrop{background:#0009}.dlg-actions{display:flex;gap:8px;margin-top:12px}
+@media(min-width:650px){main{padding:23px}.stats{grid-template-columns:repeat(4,1fr)}nav{justify-content:center}}
+</style></head>
+<body>
+<header><div class="brand"><div class="logo">⚙</div><div><strong>NEUMÁTICOS YECLA</strong><small>GESTIÓN DE ALMACÉN</small></div></div><button class="theme" id="theme">☀ / ☾</button></header>
+<nav id="nav"><button class="active" data-page="inicio">⌂ Inicio</button><button data-page="stock">▤ Almacén</button><button data-page="pedidos">⇄ Pedidos</button><button data-page="calendario">▦ Calendario</button><button data-page="contadores">▥ Contadores</button></nav>
+<main id="app"></main><footer>NEUMÁTICOS YECLA · Datos guardados en este dispositivo</footer>
+<dialog id="dlg"><form method="dialog" id="dlgform"><h3 id="dlgtitle"></h3><div id="dlgbody"></div><div class="dlg-actions"><button class="btn secondary" value="cancel">Cancelar</button><button class="btn primary" id="dlgok" value="default">Guardar</button></div></form></dialog>
+<script>
+(()=>{
+const $=s=>document.querySelector(s), today=()=>{let d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
+const fresh=()=>({sizes:[],products:[],moves:[],theme:'dark'});
+let data;try{data=JSON.parse(localStorage.getItem('ny_stock_v1'))||fresh()}catch{data=fresh()}
+if(!Array.isArray(data.sizes)||!Array.isArray(data.products)||!Array.isArray(data.moves))data=fresh();
+let page='inicio',sid=null,month=new Date().getMonth(),year=new Date().getFullYear(),search='';
+const save=()=>localStorage.setItem('ny_stock_v1',JSON.stringify(data)),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const total=()=>data.products.reduce((a,p)=>a+(+p.qty||0),0),mounted=()=>data.moves.filter(m=>m.type==='montaje');
+function go(p){page=p;search='';render()}
+function ask(title,body,fn){$('#dlgtitle').textContent=title;$('#dlgbody').innerHTML=body;$('#dlg').showModal();$('#dlgok').onclick=e=>{e.preventDefault();if(fn()!==false){$('#dlg').close();render()}}}
+function record(type,pid,q,note='',date=today()){let p=data.products.find(x=>x.id===pid);if(!p)return false;q=Math.floor(+q);if(!Number.isInteger(q)||q<1)return false;if(type==='entrada')p.qty+=q;else{if(p.qty<q){alert('No hay suficientes unidades en stock.');return false}p.qty-=q}data.moves.unshift({id:crypto.randomUUID(),type,pid,qty:q,note,date,brand:p.brand,ref:p.ref,size:data.sizes.find(s=>s.id===p.sid)?.name||''});save();return true}
+function addSize(){ask('Añadir medida','<label>Medida del neumático</label><input id="f-size" placeholder="Ej. 205/55 R16" required>',()=>{let n=$('#f-size').value.trim().toUpperCase();if(!n)return false;if(data.sizes.some(s=>s.name===n)){alert('La medida ya existe');return false}data.sizes.push({id:crypto.randomUUID(),name:n});save()})}
+function addProduct(id){ask('Añadir neumático','<label>Marca</label><input id="f-brand" placeholder="Michelin" required><label>Referencia / modelo</label><input id="f-ref" placeholder="Primacy 4" required><label>Unidades iniciales</label><input id="f-qty" type="number" min="0" value="0">',()=>{let brand=$('#f-brand').value.trim(),ref=$('#f-ref').value.trim(),qty=Number($('#f-qty').value);if(!brand||!ref||!Number.isInteger(qty)||qty<0)return false;data.products.push({id:crypto.randomUUID(),sid:id,brand,ref,qty});save()})}
+function move(p){ask('Registrar movimiento',`<div class="notice">${esc(p.brand)} · ${esc(p.ref)}<br>Stock actual: ${p.qty}</div><label>Tipo</label><select id="f-type"><option value="entrada">Entrada de proveedor (+)</option><option value="montaje">Montaje en vehículo (−)</option><option value="pedido">Salida para pedido (−)</option><option value="ajuste">Retirada / ajuste (−)</option></select><label>Unidades</label><input id="f-qty" type="number" min="1" value="1"><label>Fecha</label><input id="f-date" type="date" value="${today()}"><label>Nota / matrícula</label><input id="f-note" placeholder="Opcional">`,()=>record($('#f-type').value,p.id,$('#f-qty').value,$('#f-note').value.trim(),$('#f-date').value))}
+function item(m){let labels={entrada:'Entrada',montaje:'Montaje',pedido:'Salida para pedido',ajuste:'Retirada / ajuste'};return `<div class="item"><div><strong>${labels[m.type]} · ${esc(m.brand)}</strong><small>${esc(m.size)} · ${esc(m.ref)} · ${esc(m.date)}${m.note?' · '+esc(m.note):''}</small></div><b>${m.type==='entrada'?'+':'−'}${m.qty}</b></div>`}
+function recent(n){return data.moves.slice(0,n).map(item).join('')||'<div class="empty">Todavía no hay movimientos.</div>'}
+function render(){
+$('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===page||(page==='detalle'&&b.dataset.page==='stock')));
+let h='';
+if(page==='inicio'){let mm=mounted().filter(m=>m.date.slice(0,7)===today().slice(0,7)).reduce((a,m)=>a+m.qty,0);h=`<h2>Panel principal</h2><div class="muted">Bienvenido a la gestión del taller</div><div class="stats"><div class="stat"><small>Stock total</small><b>${total()}</b></div><div class="stat"><small>Medidas</small><b>${data.sizes.length}</b></div><div class="stat"><small>Montajes este mes</small><b>${mm}</b></div><div class="stat"><small>Referencias</small><b>${data.products.length}</b></div></div><h3>Accesos rápidos</h3><div class="actions"><button class="btn primary" data-go="stock">Ver almacén</button><button class="btn secondary" data-go="pedidos">Pedidos</button><button class="btn secondary" data-go="calendario">Calendario</button></div><div class="panel"><h3>Últimos movimientos</h3>${recent(5)}</div>`}
+if(page==='stock'){h=`<h2>Stock de almacén</h2><div class="muted">Selecciona una medida para ver marcas y referencias.</div><input id="search" placeholder="Buscar medida..." value="${esc(search)}"><div class="actions"><button class="btn primary" id="add-size">+ Añadir medida</button></div>`;let arr=data.sizes.filter(s=>s.name.toLowerCase().includes(search.toLowerCase()));h+=arr.length?arr.map(s=>`<div class="item"><div><strong>${esc(s.name)}</strong><small>${data.products.filter(p=>p.sid===s.id).length} referencias · ${data.products.filter(p=>p.sid===s.id).reduce((a,p)=>a+p.qty,0)} unidades</small></div><button class="btn secondary" data-size="${s.id}">Abrir →</button></div>`).join(''):'<div class="empty">Añade la primera medida para empezar.</div>'}
+if(page==='detalle'){let s=data.sizes.find(x=>x.id===sid);if(!s){go('stock');return}let ps=data.products.filter(p=>p.sid===sid);h=`<button class="btn secondary" id="back">← Volver</button><h2 style="margin-top:12px">${esc(s.name)}</h2><div class="actions"><button class="btn primary" id="add-product">+ Añadir referencia</button><button class="btn secondary" id="rename">Editar medida</button><button class="btn danger" id="delete">Eliminar medida</button></div>`;h+=ps.length?ps.map(p=>`<div class="item"><div><strong>${esc(p.brand)}</strong><small>${esc(p.ref)}<br>Stock disponible</small></div><div><div class="count">${p.qty}</div><div class="step"><button data-minus="${p.id}">−</button><button data-plus="${p.id}">+</button></div><button class="btn secondary" style="margin-top:6px" data-move="${p.id}">Movimiento</button></div></div>`).join(''):'<div class="empty">No hay referencias en esta medida.</div>'}
+if(page==='pedidos'){let outs=data.moves.filter(m=>m.type==='pedido');h=`<h2>Pedidos y salidas</h2><div class="stats"><div class="stat"><small>Unidades para pedidos</small><b>${outs.reduce((a,m)=>a+m.qty,0)}</b></div><div class="stat"><small>Movimientos</small><b>${outs.length}</b></div></div><div class="notice">Para registrar una salida, entra en Almacén → medida → referencia → Movimiento → Salida para pedido.</div><h3>Historial de salidas</h3>${outs.length?outs.map(item).join(''):'<div class="empty">Todavía no hay salidas.</div>'}`}
+if(page==='calendario'){let first=new Date(year,month,1),days=new Date(year,month+1,0).getDate(),offset=(first.getDay()+6)%7,cal=['L','M','X','J','V','S','D'].map(x=>`<div class="muted" style="text-align:center">${x}</div>`).join('');for(let i=0;i<offset;i++)cal+='<div></div>';for(let d=1;d<=days;d++){let dt=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`,q=mounted().filter(m=>m.date===dt).reduce((a,m)=>a+m.qty,0);cal+=`<div class="day"><b>${d}</b>${q?`<em>${q}</em>`:''}</div>`}let mm=mounted().filter(m=>m.date.slice(0,7)===`${year}-${String(month+1).padStart(2,'0')}`);h=`<h2>Calendario de montajes</h2><div class="month"><button id="prev">‹</button><b>${new Date(year,month).toLocaleDateString('es-ES',{month:'long',year:'numeric'})}</b><button id="next">›</button></div><div class="calendar">${cal}</div><div class="stats"><div class="stat"><small>Ruedas montadas este mes</small><b>${mm.reduce((a,m)=>a+m.qty,0)}</b></div><div class="stat"><small>Días con actividad</small><b>${new Set(mm.map(m=>m.date)).size}</b></div></div><h3>Movimientos del mes</h3>${mm.length?mm.map(item).join(''):'<div class="empty">No hay montajes este mes.</div>'}`}
+if(page==='contadores'){let ins=data.moves.filter(m=>m.type==='entrada').reduce((a,m)=>a+m.qty,0),outs=data.moves.filter(m=>m.type!=='entrada').reduce((a,m)=>a+m.qty,0),mm=mounted().filter(m=>m.date.slice(0,7)===today().slice(0,7)).reduce((a,m)=>a+m.qty,0);h=`<h2>Contadores y estadísticas</h2><div class="stats"><div class="stat"><small>Stock actual</small><b>${total()}</b></div><div class="stat"><small>Montadas este mes</small><b>${mm}</b></div><div class="stat"><small>Entradas registradas</small><b>${ins}</b></div><div class="stat"><small>Salidas registradas</small><b>${outs}</b></div></div><h3>Stock por medida</h3>${data.sizes.map(s=>`<div class="item"><b>${esc(s.name)}</b><b>${data.products.filter(p=>p.sid===s.id).reduce((a,p)=>a+p.qty,0)} uds.</b></div>`).join('')||'<div class="empty">Sin datos.</div>'}<h3>Copias de seguridad</h3><div class="actions"><button class="btn primary" id="export">Exportar copia</button><button class="btn secondary" id="import">Importar copia</button><button class="btn secondary" id="csv">Exportar CSV</button><button class="btn danger" id="reset">Borrar datos</button></div><div class="notice">Guarda copias periódicamente. Los datos se guardan en este navegador y dispositivo.</div>`}
+$('#app').innerHTML=h;
+$('#app').querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
+if($('#search'))$('#search').oninput=e=>{search=e.target.value;let v=e.target.selectionStart;render();$('#search').focus();$('#search').setSelectionRange(v,v)};
+if($('#add-size'))$('#add-size').onclick=addSize;
+$('#app').querySelectorAll('[data-size]').forEach(b=>b.onclick=()=>{sid=b.dataset.size;go('detalle')});
+if($('#back'))$('#back').onclick=()=>go('stock');
+if($('#add-product'))$('#add-product').onclick=()=>addProduct(sid);
+if($('#rename'))$('#rename').onclick=()=>{let s=data.sizes.find(x=>x.id===sid);ask('Editar medida',`<label>Medida</label><input id="f-name" value="${esc(s.name)}">`,()=>{let n=$('#f-name').value.trim().toUpperCase();if(!n)return false;s.name=n;save()})};
+if($('#delete'))$('#delete').onclick=()=>{if(confirm('¿Eliminar esta medida y todas sus referencias?')){data.sizes=data.sizes.filter(s=>s.id!==sid);data.products=data.products.filter(p=>p.sid!==sid);save();go('stock')}};
+$('#app').querySelectorAll('[data-plus]').forEach(b=>b.onclick=()=>record('entrada',b.dataset.plus,1,'Entrada rápida')&&render());
+$('#app').querySelectorAll('[data-minus]').forEach(b=>b.onclick=()=>record('ajuste',b.dataset.minus,1,'Salida rápida')&&render());
+$('#app').querySelectorAll('[data-move]').forEach(b=>b.onclick=()=>move(data.products.find(p=>p.id===b.dataset.move)));
+if($('#prev'))$('#prev').onclick=()=>{month--;if(month<0){month=11;year--}render()};
+if($('#next'))$('#next').onclick=()=>{month++;if(month>11){month=0;year++}render()};
+if($('#export'))$('#export').onclick=()=>download('neumaticos-yecla-copia.json',JSON.stringify(data,null,2),'application/json');
+if($('#import'))$('#import').onclick=()=>{let i=document.createElement('input');i.type='file';i.accept='.json,application/json';i.onchange=()=>{let r=new FileReader();r.onload=()=>{try{let d=JSON.parse(r.result);if(!Array.isArray(d.sizes)||!Array.isArray(d.products)||!Array.isArray(d.moves))throw 0;if(confirm('Se sustituirán los datos actuales. ¿Continuar?')){data=d;save();render()}}catch{alert('Copia no válida')}};r.readAsText(i.files[0])};i.click()};
+if($('#csv'))$('#csv').onclick=()=>{let rows=[['Medida','Marca','Referencia','Stock'],...data.products.map(p=>[data.sizes.find(s=>s.id===p.sid)?.name||'',p.brand,p.ref,p.qty])];download('stock-neumaticos-yecla.csv','\uFEFF'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\n'),'text/csv;charset=utf-8')};
+if($('#reset'))$('#reset').onclick=()=>{if(confirm('¿Borrar todo? Haz antes una copia.')){data=fresh();save();go('inicio')}};
+}
+function download(n,c,t){let a=document.createElement('a'),u=URL.createObjectURL(new Blob([c],{type:t}));a.href=u;a.download=n;a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)}
+$('#nav').onclick=e=>{let b=e.target.closest('[data-page]');if(b)go(b.dataset.page)};
+$('#theme').onclick=()=>{data.theme=data.theme==='light'?'dark':'light';document.body.classList.toggle('light',data.theme==='light');save()};
+document.body.classList.toggle('light',data.theme==='light');
+if('serviceWorker' in navigator && location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});
+render();
+})();
+</script></body></html>
