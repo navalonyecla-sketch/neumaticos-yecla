@@ -1,0 +1,147 @@
+
+(() => {
+  const KEY = "neumaticos_yecla_v1";
+  let db = JSON.parse(localStorage.getItem(KEY) || '{"tyres":[],"moves":[],"orders":[],"appointments":[],"jobs":[]}');
+  let page = "Inicio";
+
+  const save = () => localStorage.setItem(KEY, JSON.stringify(db));
+  const id = () => Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const money = n => Number(n || 0).toLocaleString("es-ES",{style:"currency",currency:"EUR"});
+  const today = () => new Date().toISOString().slice(0,10);
+  const field = (label,name,type="text",value="",extra="") =>
+    `<label>${label}<input name="${name}" type="${type}" value="${esc(value)}" ${extra}></label>`;
+  const select = (label,name,opts) =>
+    `<label>${label}<select name="${name}">${opts.map(x=>`<option>${x}</option>`).join("")}</select></label>`;
+  const button = (txt,action,cls="") => `<button class="${cls}" data-action="${action}">${txt}</button>`;
+  const card = (title,value,sub="") => `<article class="card"><small>${title}</small><strong>${value}</strong><small>${sub}</small></article>`;
+
+  document.head.insertAdjacentHTML("beforeend", `<meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#101827"><style>
+  *{box-sizing:border-box}body{margin:0;background:#f1f4f8;color:#172033;font:15px Arial,sans-serif}
+  header{background:#101827;color:white;padding:20px 16px}header h1{margin:0;font-size:23px}header p{margin:6px 0 0;color:#aebbd0}
+  nav{display:flex;overflow:auto;background:#1c293c;padding:8px;gap:6px;position:sticky;top:0;z-index:2}
+  nav button{white-space:nowrap;background:#334258;color:white;border:0;border-radius:9px;padding:11px 13px}
+  nav button.active{background:#e4a52b;color:#172033;font-weight:bold}
+  main{padding:15px;max-width:1000px;margin:auto}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .card,.panel{background:white;padding:15px;border-radius:13px;box-shadow:0 2px 8px #17203312;margin-bottom:12px}
+  .card small{display:block;color:#68758a}.card strong{display:block;font-size:23px;margin:8px 0}
+  h2{font-size:21px;margin:12px 0}h3{margin:8px 0 12px}
+  label{display:block;font-size:13px;font-weight:bold;margin:10px 0;color:#526078}
+  input,select,textarea{display:block;width:100%;padding:12px;margin-top:5px;border:1px solid #ccd4df;border-radius:8px;background:white;color:#172033;font-size:16px}
+  button,.primary{border:0;border-radius:9px;padding:12px 15px;background:#172a43;color:white;font-weight:bold;cursor:pointer}
+  button.secondary{background:#e7edf4;color:#172033}button.danger{background:#b83232;color:white}
+  form .primary{width:100%;margin-top:10px;background:#d99b20;color:#172033}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.row>*{flex:1}
+  .item{background:white;border-radius:10px;padding:13px;margin:8px 0;border:1px solid #e1e6ed}
+  .item b{font-size:16px}.muted{color:#748096;font-size:13px}.empty{padding:25px;text-align:center;color:#748096}
+  .item button{padding:8px 10px;font-size:12px;margin:5px 4px 0 0}
+  .tag{display:inline-block;background:#eaf0f7;border-radius:20px;padding:4px 8px;font-size:12px}
+  @media(min-width:650px){.grid{grid-template-columns:repeat(4,1fr)}}
+  </style>`);
+
+  document.body.innerHTML = `
+  <header><h1>NEUMÁTICOS YECLA</h1><p>Gestión del taller · Almacén · Clientes</p></header>
+  <nav id="nav"></nav><main id="app"></main>`;
+
+  const navItems = ["Inicio","Almacén","Movimientos","Pedidos","Citas","Contadores","Copias"];
+  function render(){
+    document.querySelector("#nav").innerHTML = navItems.map(x=>`<button class="${page===x?"active":""}" data-page="${x}">${x}</button>`).join("");
+    const app=document.querySelector("#app");
+    if(page==="Inicio"){
+      const units=db.tyres.reduce((a,t)=>a+Number(t.stock),0);
+      const low=db.tyres.filter(t=>Number(t.stock)<=Number(t.min));
+      app.innerHTML=`<h2>Panel principal</h2><div class="grid">
+      ${card("Referencias",db.tyres.length,"Modelos registrados")}
+      ${card("Neumáticos en stock",units,"Unidades totales")}
+      ${card("Stock bajo",low.length,"Referencias para reponer")}
+      ${card("Pedidos pendientes",db.orders.filter(o=>o.status!=="Recibido").length,"Pedidos abiertos")}
+      </div><section class="panel"><h3>Stock bajo</h3>${low.length?low.map(t=>`<p>${esc(t.size)} · ${esc(t.brand)} — <b>${t.stock} uds.</b></p>`).join(""):"<p class='muted'>No hay referencias con stock bajo.</p>"}</section>
+      <section class="panel"><h3>Últimos movimientos</h3>${db.moves.slice(-5).reverse().map(m=>`<p>${esc(m.date)} · ${esc(m.type)} · ${esc(m.size)} · ${m.qty} uds.</p>`).join("")||"<p class='muted'>Todavía no hay movimientos.</p>"}</section>`;
+    }
+    if(page==="Almacén"){
+      app.innerHTML=`<h2>Almacén</h2><section class="panel"><h3>Añadir neumático</h3>
+      <form id="tyreForm">${field("Medida (ej. 205/55 R16)","size")}${field("Marca","brand")}${field("Modelo","model")}${field("Referencia","ref") }
+      <div class="grid">${field("Stock inicial","stock","number","0",'min="0"')}${field("Stock mínimo","min","number","2",'min="0"')}${field("Coste (€)","cost","number","0",'min="0" step="0.01"')}</div>
+      <button class="primary">Guardar referencia</button></form></section>
+      <input id="search" placeholder="Buscar por medida, marca o modelo...">
+      <div id="tyreList">${db.tyres.map(t=>tyreItem(t)).join("")||'<div class="empty">Todavía no hay neumáticos registrados.</div>'}</div>`;
+    }
+    if(page==="Movimientos"){
+      app.innerHTML=`<h2>Movimientos de stock</h2><section class="panel"><form id="moveForm">
+      ${select("Tipo de movimiento","type",["Entrada","Salida","Montaje","Ajuste"])}
+      ${select("Neumático","tyre",db.tyres.map(t=>t.id))}
+      ${field("Cantidad","qty","number","1",'min="1"')}
+      ${field("Fecha","date","date",today())}${field("Observaciones","note")}
+      <button class="primary">Registrar movimiento</button></form></section>
+      <h3>Historial</h3>${db.moves.slice().reverse().map(m=>`<div class="item"><b>${esc(m.type)} · ${m.qty} uds.</b><p>${esc(m.size)} · ${esc(m.date)}</p><small>${esc(m.note)}</small></div>`).join("")||'<div class="empty">Sin movimientos.</div>'}`;
+      const s=app.querySelector('[name="tyre"]');
+      if(s) s.innerHTML=db.tyres.map(t=>`<option value="${t.id}">${esc(t.size)} · ${esc(t.brand)} (${t.stock} uds.)</option>`).join("");
+    }
+    if(page==="Pedidos"){
+      app.innerHTML=`<h2>Pedidos a proveedores</h2><section class="panel"><form id="orderForm">
+      ${field("Proveedor","supplier")}${field("Medida / producto","product")}${field("Cantidad","qty","number","1",'min="1"')}
+      ${field("Fecha","date","date",today())}
+      <button class="primary">Añadir pedido</button></form></section>
+      ${db.orders.slice().reverse().map(o=>`<div class="item"><b>${esc(o.product)}</b><p>${esc(o.supplier)} · ${o.qty} uds. · ${esc(o.date)}</p>
+      <label>Estado<select data-status="${o.id}">${["Solicitado","Confirmado","Recibido"].map(s=>`<option ${o.status===s?"selected":""}>${s}</option>`).join("")}</select></label>${button("Eliminar","delorder:"+o.id,"danger")}</div>`).join("")||'<div class="empty">No hay pedidos.</div>'}`;
+    }
+    if(page==="Citas"){
+      app.innerHTML=`<h2>Agenda de citas</h2><section class="panel"><form id="appointmentForm">
+      ${field("Cliente","client")}${field("Teléfono","phone","tel")}${field("Fecha","date","date",today())}${field("Hora","time")}
+      ${field("Trabajo / motivo","job")}<button class="primary">Guardar cita</button></form></section>
+      ${db.appointments.slice().sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time)).map(a=>`<div class="item"><b>${esc(a.time)} · ${esc(a.client)}</b><p>${esc(a.date)} · ${esc(a.job)}</p><small>${esc(a.phone)}</small><br>${button("Eliminar","delappointment:"+a.id,"danger")}</div>`).join("")||'<div class="empty">No hay citas.</div>'}`;
+    }
+    if(page==="Contadores"){
+      app.innerHTML=`<h2>Contadores de trabajos</h2><section class="panel"><form id="jobForm">
+      ${field("Tipo de trabajo","job")}${field("Cantidad","qty","number","1",'min="1"')}${field("Fecha","date","date",today())}
+      <button class="primary">Registrar trabajo</button></form></section>
+      <div class="grid">${card("Trabajos registrados",db.jobs.reduce((a,j)=>a+Number(j.qty),0),"Total acumulado")}</div>
+      ${db.jobs.slice().reverse().map(j=>`<div class="item"><b>${esc(j.job)} · ${j.qty}</b><p>${esc(j.date)}</p></div>`).join("")||'<div class="empty">Todavía no hay trabajos.</div>'}`;
+    }
+    if(page==="Copias"){
+      app.innerHTML=`<h2>Copias de seguridad</h2><section class="panel"><p>Guarda una copia de los datos para poder recuperarlos si cambias de móvil o navegador.</p>
+      <button id="export">Descargar copia de seguridad</button><hr>
+      <label>Restaurar copia JSON<input type="file" id="import" accept=".json,application/json"></label>
+      <button id="csv" class="secondary">Exportar almacén a CSV</button>
+      <p class="muted">Los datos se guardan en este navegador. Haz copias periódicas.</p></section>`;
+    }
+    wire();
+  }
+  function tyreItem(t){
+    return `<div class="item"><b>${esc(t.size)} · ${esc(t.brand)}</b><p>${esc(t.model)} · Ref. ${esc(t.ref)}</p>
+    <span class="tag">Stock: ${t.stock}</span> <span class="tag">Mínimo: ${t.min}</span> <span class="tag">${money(t.cost)}</span>
+    <br>${button("Eliminar","deltyre:"+t.id,"danger")}</div>`;
+  }
+  function wire(){
+    document.querySelectorAll("[data-page]").forEach(b=>b.onclick=()=>{page=b.dataset.page;render()});
+    document.querySelectorAll("[data-action]").forEach(b=>b.onclick=()=>{
+      const [act,key]=b.dataset.action.split(":");
+      if(act==="deltyre") db.tyres=db.tyres.filter(t=>t.id!==key);
+      if(act==="delorder") db.orders=db.orders.filter(o=>o.id!==key);
+      if(act==="delappointment") db.appointments=db.appointments.filter(a=>a.id!==key);
+      save();render();
+    });
+    document.querySelectorAll("[data-status]").forEach(s=>s.onchange=()=>{const o=db.orders.find(x=>x.id===s.dataset.status);if(o)o.status=s.value;save()});
+    const tf=document.querySelector("#tyreForm");
+    if(tf) tf.onsubmit=e=>{e.preventDefault();const f=new FormData(tf);db.tyres.push({id:id(),size:f.get("size"),brand:f.get("brand"),model:f.get("model"),ref:f.get("ref"),stock:Number(f.get("stock")),min:Number(f.get("min")),cost:Number(f.get("cost"))});save();render()};
+    const mf=document.querySelector("#moveForm");
+    if(mf) mf.onsubmit=e=>{e.preventDefault();const f=new FormData(mf),t=db.tyres.find(x=>x.id===f.get("tyre")),q=Number(f.get("qty"));if(!t||!q||q<1)return alert("Selecciona un neumático y una cantidad válida.");if(["Salida","Montaje"].includes(f.get("type"))&&t.stock<q)return alert("No hay stock suficiente.");if(f.get("type")==="Entrada")t.stock+=q;else if(["Salida","Montaje"].includes(f.get("type")))t.stock-=q;else t.stock=q;db.moves.push({id:id(),type:f.get("type"),size:t.size,qty:q,date:f.get("date"),note:f.get("note")});if(f.get("type")==="Montaje")db.jobs.push({job:"Montaje de neumáticos",qty:q,date:f.get("date")});save();render()};
+    const of=document.querySelector("#orderForm");
+    if(of) of.onsubmit=e=>{e.preventDefault();const f=new FormData(of);db.orders.push({id:id(),supplier:f.get("supplier"),product:f.get("product"),qty:f.get("qty"),date:f.get("date"),status:"Solicitado"});save();render()};
+    const af=document.querySelector("#appointmentForm");
+    if(af) af.onsubmit=e=>{e.preventDefault();const f=new FormData(af);db.appointments.push({id:id(),client:f.get("client"),phone:f.get("phone"),date:f.get("date"),time:f.get("time"),job:f.get("job")});save();render()};
+    const jf=document.querySelector("#jobForm");
+    if(jf) jf.onsubmit=e=>{e.preventDefault();const f=new FormData(jf);db.jobs.push({job:f.get("job"),qty:f.get("qty"),date:f.get("date")});save();render()};
+    const search=document.querySelector("#search");
+    if(search) search.oninput=()=>{document.querySelector("#tyreList").innerHTML=db.tyres.filter(t=>(t.size+" "+t.brand+" "+t.model).toLowerCase().includes(search.value.toLowerCase())).map(tyreItem).join("")||'<div class="empty">No se encontraron resultados.</div>';wireActionsOnly()};
+    const ex=document.querySelector("#export");
+    if(ex) ex.onclick=()=>download("neumaticos-yecla-copia.json",JSON.stringify(db,null,2),"application/json");
+    const csv=document.querySelector("#csv");
+    if(csv) csv.onclick=()=>download("almacen-neumaticos-yecla.csv","Medida;Marca;Modelo;Referencia;Stock;Mínimo;Coste\n"+db.tyres.map(t=>[t.size,t.brand,t.model,t.ref,t.stock,t.min,t.cost].join(";")).join("\n"),"text/csv");
+    const im=document.querySelector("#import");
+    if(im) im.onchange=async()=>{try{const d=JSON.parse(await im.files[0].text());if(!d.tyres||!d.moves||!d.orders||!d.appointments||!d.jobs)throw Error();if(confirm("¿Sustituir los datos actuales por esta copia?")){db=d;save();render()}}catch(e){alert("El archivo no parece una copia válida.")}};
+  }
+  function wireActionsOnly(){document.querySelectorAll("[data-action]").forEach(b=>b.onclick=()=>{const [a,k]=b.dataset.action.split(":");if(a==="deltyre"&&confirm("¿Eliminar esta referencia?")){db.tyres=db.tyres.filter(t=>t.id!==k);save();render()}})}
+  function download(name,data,type){const a=document.createElement("a"),u=URL.createObjectURL(new Blob([data],{type}));a.href=u;a.download=name;a.click();URL.revokeObjectURL(u)}
+  render();
+})();
